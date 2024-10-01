@@ -1,12 +1,33 @@
-import { FC, ReactNode } from 'react';
+'use client';
+
+import { FC, ReactNode, useMemo } from 'react';
 import NotificationProvider from './NotificationProvider';
+import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
+import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
+import '@solana/wallet-adapter-react-ui/styles.css';
+import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
+import { PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
+import { clusterApiUrl } from '@solana/web3.js';
 
 export interface RootProviderProps {
   children: ReactNode | ReactNode[];
 }
 
 const RootProvider: FC<RootProviderProps> = ({ children }) => {
-  return <NotificationProvider>{children}</NotificationProvider>;
+  const network = WalletAdapterNetwork.Devnet;
+  const endpoint = useMemo(() => clusterApiUrl(network), [network]);
+
+  const wallets = useMemo(() => [new PhantomWalletAdapter()], [network]);
+
+  return (
+    <ConnectionProvider endpoint={endpoint}>
+      <WalletProvider wallets={wallets} autoConnect>
+        <WalletModalProvider>
+          <NotificationProvider>{children}</NotificationProvider>
+        </WalletModalProvider>
+      </WalletProvider>
+    </ConnectionProvider>
+  );
 };
 
 export default RootProvider;
