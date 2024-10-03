@@ -10,14 +10,23 @@ import {
   Matches,
   MaxDate,
   MaxLength,
+  ValidateIf,
 } from 'class-validator';
 
 export class CreateUserDto
   implements
     Omit<
       User,
-      'id' | 'phone' | 'bio' | 'avatar' | 'refreshToken' | 'stripeCustomerId' | 'registeredAt'
-    >
+      | 'id'
+      | 'phone'
+      | 'bio'
+      | 'avatar'
+      | 'refreshToken'
+      | 'stripeCustomerId'
+      | 'registeredAt'
+      | 'wallet'
+    >,
+    Pick<Partial<User>, 'wallet'>
 {
   @ApiProperty({
     description: "User's registration method",
@@ -102,4 +111,16 @@ export class CreateUserDto
   @IsNotEmpty()
   @IsDefined()
   password: string;
+
+  @ApiProperty({
+    description: "User's crypto wallet",
+    examples: [
+      'G5ZegMhe8wwnw257tzAdWfDdYWfE2SbVwK4VEpWTYN9A',
+      'EDFVK31PPpHM7nnv6NUSMTGko46v1u5j8TXnXje1CMPw',
+    ],
+    default: 'G5ZegMhe8wwnw257tzAdWfDdYWfE2SbVwK4VEpWTYN9A',
+  })
+  @IsString()
+  @ValidateIf((_, value) => value)
+  wallet?: string | null;
 }

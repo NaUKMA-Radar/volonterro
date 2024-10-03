@@ -5,21 +5,32 @@ import { ApplicationRoutes } from '../../../utils/routes.utils';
 import Link from 'next/link';
 import SSOAuthenticationButtons from '../SSOAuthenticationButtons';
 import PasswordInput from '../../Controls/PasswordInput';
-import { authWithSSOIfAuthTokenExist, signUp } from '@/app/(core)/actions/auth.actions';
+import {
+  authWithSSOIfAuthTokenExist,
+  getWalletAuthMessage,
+  signUp,
+} from '@/app/(core)/actions/auth.actions';
 import { useRouter } from 'next/navigation';
 import useNotification from '@/app/(core)/hooks/notifications.hooks';
 import { NotificationType } from '@/app/(core)/utils/notifications.utils';
 import { HttpStatusCode } from 'axios';
 import { UserRegistrationMethodEnum } from '@/app/(core)/store/types/user-registration-method.types';
+import { SolanaIcon } from '@/app/(core)/ui/Icons/Icons';
+import { useWalletModal } from '@solana/wallet-adapter-react-ui';
+import { useWallet } from '@solana/wallet-adapter-react';
+import bs58 from 'bs58';
 
 export interface SignUpFormProps {}
 export interface SignUpFormState {
   isLoaded: boolean;
+  isWalletConnecting: boolean;
+  selectedWallet?: string;
   errors: any;
 }
 
 const initialState: SignUpFormState = {
   isLoaded: false,
+  isWalletConnecting: false,
   errors: {},
 };
 
@@ -27,6 +38,8 @@ const SignUpForm: FC<SignUpFormProps> = () => {
   const [state, setState] = useState(initialState);
   const { createNotification } = useNotification();
   const router = useRouter();
+  const walletModal = useWalletModal();
+  const wallet = useWallet();
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -57,6 +70,30 @@ const SignUpForm: FC<SignUpFormProps> = () => {
   useEffect(() => {
     setState({ ...state, isLoaded: true });
   }, []);
+
+  useEffect(() => {
+    if (state.isLoaded && wallet.publicKey && !state.isWalletConnecting) {
+      wallet.publicKey = null;
+      localStorage.removeItem('walletName');
+      wallet.disconnect();
+    }
+  }, [state.isLoaded, wallet.publicKey, state.isWalletConnecting]);
+
+  useEffect(() => {
+    if (wallet.publicKey && state.isWalletConnecting) {
+      setState({
+        ...state,
+        selectedWallet: wallet.publicKey.toBase58(),
+        errors: {
+          ...state.errors,
+          nested: Object.fromEntries(
+            Object.entries(state.errors.nested ?? {}).filter(([key, _]) => key !== 'wallet'),
+          ),
+        },
+        isWalletConnecting: false,
+      });
+    }
+  }, [state.isWalletConnecting, wallet.publicKey]);
 
   useEffect(() => {
     if (state.isLoaded) {
@@ -282,6 +319,43 @@ const SignUpForm: FC<SignUpFormProps> = () => {
               }
             />
             {state.errors.nested?.confirmPassword?.map((error: string, index: number) => (
+              <span key={index} className='text-red-500 text-xs font-medium mt-1 text-justify'>
+                {error}
+              </span>
+            ))}
+          </div>
+          <div className='flex flex-col sm:col-span-2'>
+            <label
+              htmlFor='sign-up-confirm-password'
+              className='text-gray-500 font-medium text-sm mb-1'
+            >
+              Wallet:
+            </label>
+            <div className='flex gap-3'>
+              <input
+                defaultValue={state.selectedWallet}
+                type='text'
+                name='wallet'
+                readOnly
+                id='sign-up-wallet'
+                placeholder='EDFVK31PPpHM7nnv6NUSMTGko46v1u5j8TXnXje1CMPw'
+                className={`border p-3 rounded-lg flex-1 text-gray-700 read-only:text-gray-500 font-medium ${
+                  state.errors.nested?.wallet ? `border-red-500` : ``
+                }`}
+              />
+              <button
+                type='button'
+                className='inline-flex px-5 justify-center items-center border rounded-lg p-2.5 font-medium text-gray-500 text-center hover:bg-slate-100 transition-[0.3s_ease]'
+                onClick={() => {
+                  setState({ ...state, selectedWallet: undefined, isWalletConnecting: true });
+                  walletModal.setVisible(true);
+                }}
+              >
+                <SolanaIcon className='size-5 me-3' />
+                Connect
+              </button>
+            </div>
+            {state.errors.nested?.wallet?.map((error: string, index: number) => (
               <span key={index} className='text-red-500 text-xs font-medium mt-1 text-justify'>
                 {error}
               </span>

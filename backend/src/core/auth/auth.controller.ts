@@ -226,4 +226,34 @@ export class AuthController {
       })
       .json(user);
   }
+
+  @ApiCreatedResponse({
+    description: 'User was successfully logged in with wallet.',
+    type: UserPublicEntity,
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Cannot log in the user with wallet.',
+  })
+  @ApiConflictResponse({
+    description: 'Cannot log in the user with wallet. Invalid data was provided.',
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Internal server error was occured.',
+  })
+  @Post('/login/wallet')
+  async walletLogin(@Req() request: Request, @Res() response: Response) {
+    const user = await this.authService.walletLogin(
+      (request.headers.authorization || '').replace('Bearer ', ''),
+    );
+
+    return response
+      .status(HttpStatus.CREATED)
+      .cookie(process.env.ACCESS_TOKEN_COOKIE_NAME ?? 'Funders-Access-Token', user.accessToken, {
+        httpOnly: true,
+      })
+      .cookie(process.env.REFRESH_TOKEN_COOKIE_NAME ?? 'Funders-Refresh-Token', user.refreshToken, {
+        httpOnly: true,
+      })
+      .json(user);
+  }
 }

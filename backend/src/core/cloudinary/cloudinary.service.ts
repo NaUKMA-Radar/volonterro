@@ -103,7 +103,7 @@ export class CloudinaryService {
     options: IResourceToUploadOptions = {},
   ): IPrepareMultipleResourcesForUpload {
     const resources: IUploadCloudinaryResource[] = payload.map(resource => {
-      const folder = options.mapping ? `${options.mapping[resource.fieldname]}/` ?? '' : '';
+      const folder = options.mapping ? `${options.mapping[resource.fieldname]}/` : '';
       const filename = `${uuid()}.${getFileExtension(resource)}`;
       const publicId = `${folder}${filename}`;
       const resourceType = this.getResourceType(resource);

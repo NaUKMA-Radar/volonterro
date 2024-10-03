@@ -1,12 +1,14 @@
-import { FC, useRef, useState } from 'react';
+import { FC, useState } from 'react';
 import Modal, { ModalProps } from '../Modal/Modal';
 import { Post } from '../../store/types/post.types';
-import { createPaymentCharge, donate } from '../../actions/post.actions';
+import { donate } from '../../actions/post.actions';
 import useNotification from '../../hooks/notifications.hooks';
 import { NotificationType } from '../../utils/notifications.utils';
-import PaymentForm from './PaymentForm';
-import { PaymentIntentResult } from '@stripe/stripe-js';
 import { useRouter } from 'next/navigation';
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
+import { PublicKey, Transaction } from '@solana/web3.js';
+import { createTransferInstruction, getAssociatedTokenAddress } from '@solana/spl-token';
+import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 
 export interface PaymentModalProps extends ModalProps {
   post: Post;
@@ -32,40 +34,11 @@ const initialState: PaymentModalState = {
 
 const PaymentModal: FC<PaymentModalProps> = ({ post, children, onClose, ...props }) => {
   const [state, setState] = useState(initialState);
+  const wallet = useWallet();
+  const { connection } = useConnection();
   const { createNotification } = useNotification();
   const router = useRouter();
-  const paymentFormRef = useRef<HTMLFormElement>(null);
-
-  const handleSubmit = async (result: PaymentIntentResult) => {
-    if (result.error) {
-      createNotification({
-        type: NotificationType.Error,
-        message: 'An error occurred while processing the request. Please, try again later',
-      });
-    } else {
-      const response = await donate(
-        post.id,
-        result.paymentIntent.amount / 100,
-        JSON.stringify(result.paymentIntent),
-      );
-
-      if (response.error || !response.data) {
-        createNotification({
-          type: NotificationType.Error,
-          message: 'An error occurred while processing the request. Please, try again later',
-        });
-      } else {
-        createNotification({
-          type: NotificationType.Success,
-          message: 'The donation was successfully created!',
-        });
-        router.refresh();
-      }
-    }
-
-    setState(prevState => ({ ...prevState, isLoading: false }));
-    onClose();
-  };
+  const modal = useWalletModal();
 
   const getButtonsByStage = (stage: number): ModalProps['buttons'] => {
     switch (stage) {
@@ -78,63 +51,92 @@ const PaymentModal: FC<PaymentModalProps> = ({ post, children, onClose, ...props
           },
           {
             type: 'accept',
-            name: 'Continue',
+            name: 'Donate',
             variant: 'primary',
             disabled: state.isLoading,
             action: async () => {
               if (!state.amount) {
                 setState({
                   ...state,
-                  errors: { amount: 'The donation amount is not chosen or is less than 0.01 USD' },
+                  errors: {
+                    amount: 'The donation amount is not chosen or is less than 0.01 USD',
+                  },
                 });
 
                 return;
               }
 
               setState(prevState => ({ ...prevState, isLoading: true }));
-              const response = await createPaymentCharge(state.amount);
 
-              if (!response.error && response.data) {
-                setState(prevState => ({
-                  ...prevState,
-                  clientSecret: response.data!.clientSecret,
-                  stage: 2,
-                }));
+              if (wallet.publicKey && wallet.sendTransaction) {
+                try {
+                  const associatedTokenAccountReceiver = await getAssociatedTokenAddress(
+                    new PublicKey('Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr'),
+                    new PublicKey('EDFVK31PPpHM7nnv6NUSMTGko46v1u5j8TXnXje1CMPw'),
+                    true,
+                  );
+                  const associatedTokenAccountSender = await getAssociatedTokenAddress(
+                    new PublicKey('Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr'),
+                    wallet.publicKey,
+                    true,
+                  );
+
+                  const latestBlockhash = await connection.getLatestBlockhash('finalized');
+
+                  const transaction = new Transaction().add(
+                    createTransferInstruction(
+                      associatedTokenAccountSender,
+                      associatedTokenAccountReceiver,
+                      wallet.publicKey,
+                      state.amount * 1_000_000,
+                    ),
+                  );
+
+                  transaction.feePayer = wallet.publicKey;
+                  transaction.recentBlockhash = latestBlockhash.blockhash;
+
+                  await wallet.sendTransaction(transaction, connection);
+
+                  const response = await donate(
+                    post.id,
+                    state.amount,
+                    JSON.stringify({
+                      wallet: wallet.publicKey.toBase58(),
+                      amount: state.amount,
+                      createdAt: Date.now(),
+                    }),
+                  );
+
+                  if (response.error || !response.data) {
+                    createNotification({
+                      type: NotificationType.Error,
+                      message:
+                        'An error occurred while processing the request. Please, try again later',
+                    });
+                    setState(prevState => ({ ...prevState, isLoading: false }));
+                  } else {
+                    createNotification({
+                      type: NotificationType.Success,
+                      message: 'The donation was successfully created!',
+                    });
+                    setState(prevState => ({ ...prevState, isLoading: false }));
+                    onClose?.();
+                    router.refresh();
+                  }
+                } catch (error) {
+                  console.log(error);
+                  setState(prevState => ({ ...prevState, isLoading: false }));
+                }
               } else {
+                modal.setVisible(true);
                 createNotification({
                   type: NotificationType.Error,
-                  message: response.error ?? 'Cannot proceed the action. Please, try again later',
-                });
-              }
-              setState(prevState => ({ ...prevState, isLoading: false }));
-            },
-          } as any,
-        ];
-      case 2:
-        return [
-          {
-            type: 'close',
-            name: 'Close',
-            action: () => onClose(),
-          },
-          {
-            type: 'accept',
-            name: 'Proceed',
-            variant: 'primary',
-            disabled: state.isLoading,
-            action: () => {
-              setState(prevState => ({ ...prevState, isLoading: true }));
-              if (paymentFormRef.current) {
-                paymentFormRef.current.dispatchEvent(
-                  new Event('submit', { cancelable: true, bubbles: true }),
-                );
-              } else {
-                createNotification({
-                  type: NotificationType.Error,
-                  message: 'Cannot submit the form. Please, try again later',
+                  message:
+                    'The wallet is disconnected. Please, connect the wallet to proceed the payment',
                 });
                 setState(prevState => ({ ...prevState, isLoading: false }));
               }
+              setState(prevState => ({ ...prevState, isLoading: false }));
             },
           } as any,
         ];
@@ -147,12 +149,12 @@ const PaymentModal: FC<PaymentModalProps> = ({ post, children, onClose, ...props
     <Modal {...props} buttons={getButtonsByStage(state.stage)} className='max-w-xl'>
       {state.stage === 1 && (
         <div className='flex flex-col p-5'>
-          <h3 className='font-bold text-gray-600'>Step 1: Choose the donation amount</h3>
+          <h3 className='font-bold text-gray-600'>Choose the donation amount</h3>
           <p className='text-sm text-gray-500 mt-1 mb-3'>
-            Choose the amount of money you would like to donate to the current post (in USD)
+            Choose the amount of money you would like to donate to the current post (in USDC)
           </p>
           <label htmlFor='payment-amout' className='text-gray-500 text-sm font-medium mb-0.5'>
-            Amount (USD):
+            Amount (USDC):
           </label>
           <input
             type='number'
@@ -177,22 +179,6 @@ const PaymentModal: FC<PaymentModalProps> = ({ post, children, onClose, ...props
           {state.errors.amount && (
             <span className='text-xs text-red-500 mt-1 font-medium'>{state.errors.amount}</span>
           )}
-        </div>
-      )}
-      {state.stage === 2 && (
-        <div className='flex flex-col p-5'>
-          <h3 className='font-bold text-gray-600'>
-            Step 2: Choose the payment method and fill out required fields
-          </h3>
-          <p className='text-sm text-gray-500 mt-1 mb-3'>
-            Fill out the form with payment method details to make a donation
-          </p>
-          <PaymentForm
-            clientSecret={state.clientSecret}
-            post={post}
-            ref={paymentFormRef}
-            onSubmit={handleSubmit}
-          />
         </div>
       )}
     </Modal>

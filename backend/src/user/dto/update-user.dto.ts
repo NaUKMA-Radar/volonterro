@@ -115,4 +115,16 @@ export class UpdateUserDto
   @IsString()
   @ValidateIf((_, value) => value)
   refreshToken?: string | null;
+
+  @ApiProperty({
+    description: "User's crypto wallet",
+    examples: [
+      'G5ZegMhe8wwnw257tzAdWfDdYWfE2SbVwK4VEpWTYN9A',
+      'EDFVK31PPpHM7nnv6NUSMTGko46v1u5j8TXnXje1CMPw',
+    ],
+    default: 'G5ZegMhe8wwnw257tzAdWfDdYWfE2SbVwK4VEpWTYN9A',
+  })
+  @IsString()
+  @ValidateIf((_, value) => value)
+  wallet?: string | null;
 }

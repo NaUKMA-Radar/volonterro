@@ -45,6 +45,7 @@ model User {
   phone              String?  @db.VarChar(15)
   bio                String?
   avatar             String?  @db.VarChar(255)
+  wallet             String?  @db.VarChar(255)
   refreshToken       String?
   stripeCustomerId   String   @default("cus_undefined_id") @db.VarChar(255)
   registeredAt       DateTime @default(now())

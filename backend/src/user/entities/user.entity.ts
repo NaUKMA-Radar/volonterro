@@ -176,6 +176,18 @@ export class UserEntity implements User {
   stripeCustomerId: string;
 
   @ApiProperty({
+    description: "User's crypto wallet",
+    examples: [
+      'G5ZegMhe8wwnw257tzAdWfDdYWfE2SbVwK4VEpWTYN9A',
+      'EDFVK31PPpHM7nnv6NUSMTGko46v1u5j8TXnXje1CMPw',
+    ],
+    default: 'G5ZegMhe8wwnw257tzAdWfDdYWfE2SbVwK4VEpWTYN9A',
+  })
+  @IsString()
+  @ValidateIf((_, value) => value)
+  wallet: string | null;
+
+  @ApiProperty({
     description: "User's registration date and time",
     examples: [new Date('2024-01-03'), new Date('2023-11-02'), new Date('2023-06-30')],
     default: new Date('2024-01-03'),

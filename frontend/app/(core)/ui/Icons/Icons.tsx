@@ -4,6 +4,39 @@ export interface IconProps extends React.SVGAttributes<SVGElement> {
   solid?: boolean;
 }
 
+export const SolanaIcon: FC<IconProps> = props => {
+  return (
+    <svg
+      width='128'
+      height='128'
+      viewBox='0 0 128 128'
+      fill='none'
+      xmlns='http://www.w3.org/2000/svg'
+      {...props}
+    >
+      <g clipPath='url(#clip0_14_616)'>
+        <path
+          d='M21.4677 90.0787C22.2388 89.3083 23.2843 88.8755 24.3742 88.8755H124.953C126.786 88.8755 127.703 91.0911 126.407 92.3861L106.533 112.244C105.761 113.015 104.716 113.448 103.626 113.448H3.04674C1.21451 113.448 0.297278 111.232 1.59339 109.937L21.4677 90.0787Z'
+          fill='#00FFA3'
+        />
+        <path
+          d='M21.4677 15.9354C22.2388 15.1649 23.2843 14.7321 24.3742 14.7321H124.953C126.786 14.7321 127.703 16.9477 126.407 18.2427L106.533 38.1013C105.761 38.8717 104.716 39.3045 103.626 39.3045H3.04674C1.21451 39.3045 0.297278 37.0888 1.59339 35.7939L21.4677 15.9354Z'
+          fill='#00FFA3'
+        />
+        <path
+          d='M106.533 52.917C105.761 52.1466 104.716 51.7138 103.626 51.7138H3.04674C1.21451 51.7138 0.297278 53.9292 1.59339 55.2244L21.4677 75.0827C22.2388 75.8532 23.2843 76.2862 24.3742 76.2862H124.953C126.786 76.2862 127.703 74.0706 126.407 72.7754L106.533 52.917Z'
+          fill='#00FFA3'
+        />
+      </g>
+      <defs>
+        <clipPath id='clip0_14_616'>
+          <rect width='128' height='128' fill='currentColor' />
+        </clipPath>
+      </defs>
+    </svg>
+  );
+};
+
 export const GoogleIcon: FC<IconProps> = props => {
   return (
     <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' fill='none' {...props}>
