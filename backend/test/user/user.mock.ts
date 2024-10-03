@@ -28,6 +28,7 @@ export class MockDataStorage {
       refreshToken: null,
       stripeCustomerId: 'cus_NffrFeUfNV2Hib',
       registeredAt: new Date(),
+      wallet: null,
     },
     {
       id: '989d32c2-abd4-43d3-a420-ee175ae16b98',
@@ -43,6 +44,7 @@ export class MockDataStorage {
       refreshToken: null,
       stripeCustomerId: 'cus_NffrFeUfNV2Hib',
       registeredAt: new Date(),
+      wallet: null,
     },
     {
       id: '34f79b86-2151-4483-838f-0a0ed586a621',
@@ -58,6 +60,7 @@ export class MockDataStorage {
       refreshToken: null,
       stripeCustomerId: 'cus_NffrFeUfNV2Hib',
       registeredAt: new Date(),
+      wallet: null,
     },
     {
       id: '26e6fdab-bbf8-4500-b78b-56378421b230',
@@ -73,6 +76,7 @@ export class MockDataStorage {
       refreshToken: null,
       stripeCustomerId: 'cus_NffrFeUfNV2Hib',
       registeredAt: new Date(),
+      wallet: null,
     },
     {
       id: '23fbed56-1bb9-40a0-8977-2dd0f0c6c31f',
@@ -88,6 +92,7 @@ export class MockDataStorage {
       refreshToken: null,
       stripeCustomerId: 'cus_NffrFeUfNV2Hib',
       registeredAt: new Date(),
+      wallet: null,
     },
   ];
 
@@ -136,6 +141,7 @@ export class MockDataStorage {
       refreshToken: null,
       stripeCustomerId: 'cus_NffrFeUfNV2Hib',
       registeredAt: new Date(),
+      wallet: null,
     },
     {
       id: '26e6fdab-bbf8-4500-b78b-56378421b230',
@@ -151,6 +157,7 @@ export class MockDataStorage {
       refreshToken: null,
       stripeCustomerId: 'cus_NffrFeUfNV2Hib',
       registeredAt: new Date(),
+      wallet: null,
     },
   ];
 
