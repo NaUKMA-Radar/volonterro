@@ -9,7 +9,6 @@ import {
   object,
   regex,
   string,
-  toCustom,
   toTrimmed,
   union,
 } from 'valibot';
@@ -71,6 +70,10 @@ export const RegisterSchema = object(
           'The user must be at least 14 years old.',
         ), // Min user age can be 14 years
       ]),
+    ]),
+    wallet: string('Please choose a valid solana wallet address', [
+      toTrimmed(),
+      minLength(1, 'Please choose a valid solana wallet address'),
     ]),
   },
   never(),

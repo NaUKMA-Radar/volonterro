@@ -5,20 +5,31 @@ import { ApplicationRoutes } from '../../../utils/routes.utils';
 import Link from 'next/link';
 import SSOAuthenticationButtons from '../SSOAuthenticationButtons';
 import PasswordInput from '../../Controls/PasswordInput';
-import { authWithSSOIfAuthTokenExist, signIn } from '@/app/(core)/actions/auth.actions';
+import {
+  authWithSSOIfAuthTokenExist,
+  authWithWallet,
+  getWalletAuthMessage,
+  signIn,
+} from '@/app/(core)/actions/auth.actions';
 import { useRouter } from 'next/navigation';
 import useNotification from '@/app/(core)/hooks/notifications.hooks';
 import { NotificationType } from '@/app/(core)/utils/notifications.utils';
 import { HttpStatusCode } from 'axios';
+import { useWalletModal } from '@solana/wallet-adapter-react-ui';
+import { useWallet } from '@solana/wallet-adapter-react';
+import bs58 from 'bs58';
+import { SolanaIcon } from '@/app/(core)/ui/Icons/Icons';
 
 export interface SignInFormProps {}
 export interface SignInFormState {
   isLoaded: boolean;
+  isWalletConnecting: boolean;
   errors: any;
 }
 
 const initialState: SignInFormState = {
   isLoaded: false,
+  isWalletConnecting: false,
   errors: {},
 };
 
@@ -26,6 +37,8 @@ const SignInForm: FC<SignInFormProps> = () => {
   const { createNotification } = useNotification();
   const [state, setState] = useState(initialState);
   const router = useRouter();
+  const walletModal = useWalletModal();
+  const wallet = useWallet();
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -55,6 +68,52 @@ const SignInForm: FC<SignInFormProps> = () => {
   useEffect(() => {
     setState({ ...state, isLoaded: true });
   }, []);
+
+  useEffect(() => {
+    if (state.isLoaded && wallet.publicKey && !state.isWalletConnecting) {
+      wallet.publicKey = null;
+      localStorage.removeItem('walletName');
+      wallet.disconnect();
+    }
+  }, [state.isLoaded, wallet.publicKey, state.isWalletConnecting]);
+
+  useEffect(() => {
+    if (wallet.publicKey && state.isWalletConnecting) {
+      const request = async () => {
+        if (wallet.signMessage) {
+          const message = await getWalletAuthMessage();
+          const messageBytes = new TextEncoder().encode(message);
+          const signMessageResponse = await wallet.signMessage(messageBytes);
+          const bs58encodedPublicKey = wallet.publicKey?.toBase58();
+          const bs58encodedPayload = bs58.encode(
+            new TextEncoder().encode(JSON.stringify({ message })),
+          );
+          const signature = bs58.encode(signMessageResponse);
+          const accessToken = `${bs58encodedPublicKey}.${bs58encodedPayload}.${signature}`;
+
+          const response = await authWithWallet(accessToken);
+
+          if (response.status !== HttpStatusCode.Created) {
+            setState({ ...state, isWalletConnecting: false });
+            createNotification({
+              type: NotificationType.Error,
+              message: 'Cannot authenticate the user with provided wallet',
+            });
+
+            return;
+          }
+
+          createNotification({
+            type: NotificationType.Success,
+            message: 'The user was successfully authorized',
+          });
+          router.push(ApplicationRoutes.Home);
+        }
+      };
+
+      request().catch(console.error);
+    }
+  }, [state.isWalletConnecting, wallet.publicKey]);
 
   useEffect(() => {
     if (state.isLoaded) {
@@ -191,6 +250,17 @@ const SignInForm: FC<SignInFormProps> = () => {
         </div>
         <div className='flex flex-col gap-y-2'>
           <SSOAuthenticationButtons type='sign-in' />
+          <button
+            type='button'
+            className='inline-flex justify-center items-center border rounded-lg p-2.5 font-medium text-gray-500 text-center hover:bg-slate-100 transition-[0.3s_ease]'
+            onClick={() => {
+              setState({ ...state, isWalletConnecting: true });
+              walletModal.setVisible(true);
+            }}
+          >
+            <SolanaIcon className='size-5 me-3' />
+            Sign in with Solana Wallet
+          </button>
         </div>
       </div>
     </form>

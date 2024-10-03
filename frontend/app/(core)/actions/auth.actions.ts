@@ -57,6 +57,7 @@ export const signUp = async (state: any, formData: FormData) => {
   const { ACTION_ID, registrationMethod, confirmPassword, ...data } = Object.fromEntries(
     formData,
   ) as any;
+
   try {
     if (!data.password) {
       data.password = '#xxxxxx0';
@@ -219,6 +220,32 @@ export const authWithSSOIfAuthTokenExist = async (): Promise<{
         },
       });
     }
+  } catch (error: any) {
+    return { notify: true, data: { error: error.toString() }, status: HttpStatusCode.Unauthorized };
+  }
+
+  return {
+    notify: true,
+    data: { message: 'The user was successfully authorized' },
+    status: HttpStatusCode.Created,
+  };
+};
+
+export const getWalletAuthMessage = () => process.env.NEXT_AUTH_MESSAGE;
+
+export const authWithWallet = async (
+  accessToken: string,
+): Promise<{
+  notify: boolean;
+  data: any;
+  status: HttpStatusCode;
+}> => {
+  try {
+    await axios.post(`/auth/login/wallet`, undefined, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
   } catch (error: any) {
     return { notify: true, data: { error: error.toString() }, status: HttpStatusCode.Unauthorized };
   }

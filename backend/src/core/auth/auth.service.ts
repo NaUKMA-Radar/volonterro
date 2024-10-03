@@ -17,6 +17,8 @@ import { LogoutDto } from './dto/logout.dto';
 import { RefreshDto } from './dto/refresh.dto';
 import { Auth, google } from 'googleapis';
 import { HttpService } from '@nestjs/axios';
+import * as nacl from 'tweetnacl';
+import bs58 from 'bs58';
 
 @Injectable()
 export class AuthService {
@@ -125,6 +127,37 @@ export class AuthService {
       if (user.registrationMethod !== 'Discord') {
         throw new AuthException('There are not any users with such email registered with Discord');
       }
+
+      const { accessToken, refreshToken } = await this.generateJwtTokensPair(user);
+
+      await this.userService.update(user.id, { refreshToken });
+
+      return { ...user, accessToken, refreshToken };
+    } catch (error) {
+      if (error instanceof AuthException) {
+        throw error;
+      }
+
+      throw new AuthException('Cannot authorize the user with provided credentials.');
+    }
+  }
+
+  async walletLogin(token: string): Promise<LoginResponse> {
+    try {
+      const authMessage = process.env.AUTH_MESSAGE;
+      const [publicKey, _, signature] = token.split('.');
+
+      try {
+        nacl.sign.detached.verify(
+          new TextEncoder().encode(authMessage),
+          bs58.decode(signature),
+          bs58.decode(publicKey),
+        );
+      } catch (error) {
+        throw new AuthException('Cannot authorize the user with provided credentials.');
+      }
+
+      const user = await this.userService.findOne({ where: { wallet: publicKey } });
 
       const { accessToken, refreshToken } = await this.generateJwtTokensPair(user);
 
