@@ -13,7 +13,7 @@
     "seed:create": "node backend/prisma/seeders/index.ts --create ${npm_config_name} && sudo chmod -R 777 backend/prisma/seeders/",
     "init:backend": "cd backend && npm install",
     "init:frontend": "cd frontend && npm install",
-    "init": "npm install -g pnpm && (pnpm install || npm install) && (cd backend && (pnpm install || npm insatll)) && (cd ../frontnd && (pnpm install || npm insatll))",
+    "init": "npm install -g pnpm && (pnpm install || npm install) && (cd backend && (pnpm install || npm insatll)) && (cd ../frontend && (pnpm install || npm insatll))",
     "build:docker:development": "docker compose --env-file=./env/.env.development --file docker-compose.development.yml build --no-cache",
     "start:docker:development": "docker compose --env-file=./env/.env.development --file docker-compose.development.yml up -d",
     "start:build:docker:development": "docker compose --env-file=./env/.env.development --file docker-compose.development.yml up --build -d",
