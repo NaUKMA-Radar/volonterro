@@ -1,28 +1,52 @@
 {
-  "name": "frontend",
-  "version": "0.1.0",
+  "name": "volonterro-frontend",
+  "version": "1.0.0",
+  "description": "The frontend of the Volonterro application",
+  "author": "Oleksandr Igumnov",
+  "license": "UNLICENSED",
   "private": true,
   "scripts": {
     "dev": "CHOKIDAR_USEPOLLING=true next dev",
-    "dev:docker": "CHOKIDAR_USEPOLLING=true PORT=$FRONTEND_PORT next dev",
+    "dev:docker": "CHOKIDAR_USEPOLLING=true PORT=$FRONTEND_INTERNAL_PORT next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "",
+    "test:watch": "jest --watch"
   },
   "dependencies": {
+    "@solana/spl-token": "^0.4.8",
+    "@solana/wallet-adapter-base": "^0.9.23",
+    "@solana/wallet-adapter-react": "^0.15.35",
+    "@solana/wallet-adapter-react-ui": "^0.9.35",
+    "@solana/wallet-adapter-wallets": "^0.19.32",
+    "@solana/web3.js": "^1.95.3",
+    "@stripe/react-stripe-js": "^2.7.0",
+    "@stripe/stripe-js": "^3.3.0",
+    "axios": "^1.6.8",
+    "bs58": "^6.0.0",
+    "framer-motion": "^11.1.5",
+    "googleapis": "^134.0.0",
+    "jose": "^5.3.0",
+    "next": "14.2.3",
+    "qs": "^6.12.1",
     "react": "^18",
     "react-dom": "^18",
-    "next": "14.0.4"
+    "stripe": "^15.4.0",
+    "uuid": "^9.0.1",
+    "valibot": "^0.30.0"
   },
   "devDependencies": {
-    "typescript": "^5",
     "@types/node": "^20",
+    "@types/qs": "^6.9.15",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@types/uuid": "^9.0.8",
     "autoprefixer": "^10.0.1",
+    "eslint": "^8",
+    "eslint-config-next": "14.0.4",
     "postcss": "^8",
     "tailwindcss": "^3.3.0",
-    "eslint": "^8",
-    "eslint-config-next": "14.0.4"
+    "typescript": "^5"
   }
 }

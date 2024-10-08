@@ -1,27 +1,38 @@
 {
-  "name": "course-work",
+  "name": "volonterro",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "The Volonterro application",
   "scripts": {
+    "database:migrate:development": "export POSTGRES_URL=$(docker compose --env-file=./env/.env.development --file docker-compose.development.yml exec backend sh -c 'echo $EXTERNAL_POSTGRES_URL') && cd backend && npx prisma migrate dev && npx prisma generate",
+    "database:migrate:undo:all:development": "cd backend/prisma && rm -rf migrations/*",
+    "database:pull:development": "export POSTGRES_URL=$(docker compose --env-file=./env/.env.development --file docker-compose.development.yml exec backend sh -c 'echo $EXTERNAL_POSTGRES_URL') && cd backend && npx prisma db pull",
+    "database:push:development": "export POSTGRES_URL=$(docker compose --env-file=./env/.env.development --file docker-compose.development.yml exec backend sh -c 'echo $EXTERNAL_POSTGRES_URL') && cd backend && npx prisma db push",
+    "seed:all:development": "export POSTGRES_URL=$(docker compose --env-file=./env/.env.development --file docker-compose.development.yml exec backend sh -c 'echo $EXTERNAL_POSTGRES_URL') USER_PASSWORD_SALT_PREFIX=$(docker compose --env-file=./env/.env.development --file docker-compose.development.yml exec backend sh -c 'echo $USER_PASSWORD_SALT_PREFIX') USER_PASSWORD_SALT_SUFFIX=$(docker compose --env-file=./env/.env.development --file docker-compose.development.yml exec backend sh -c 'echo $USER_PASSWORD_SALT_SUFFIX') STRIPE_API_KEY=$(docker compose --env-file=./env/.env.development --file docker-compose.development.yml exec backend sh -c 'echo $STRIPE_API_KEY') && cd backend && npm run seed:all",
+    "seed:undo:all:development": "export POSTGRES_URL=$(docker compose --env-file=./env/.env.development --file docker-compose.development.yml exec backend sh -c 'echo $EXTERNAL_POSTGRES_URL') USER_PASSWORD_SALT_PREFIX=$(docker compose --env-file=./env/.env.development --file docker-compose.development.yml exec backend sh -c 'echo $USER_PASSWORD_SALT_PREFIX') USER_PASSWORD_SALT_SUFFIX=$(docker compose --env-file=./env/.env.development --file docker-compose.development.yml exec backend sh -c 'echo $USER_PASSWORD_SALT_SUFFIX') STRIPE_API_KEY=$(docker compose --env-file=./env/.env.development --file docker-compose.development.yml exec backend sh -c 'echo $STRIPE_API_KEY') && cd backend && npm run seed:undo:all",
+    "seed:redo:all:development": "export POSTGRES_URL=$(docker compose --env-file=./env/.env.development --file docker-compose.development.yml exec backend sh -c 'echo $EXTERNAL_POSTGRES_URL') USER_PASSWORD_SALT_PREFIX=$(docker compose --env-file=./env/.env.development --file docker-compose.development.yml exec backend sh -c 'echo $USER_PASSWORD_SALT_PREFIX') USER_PASSWORD_SALT_SUFFIX=$(docker compose --env-file=./env/.env.development --file docker-compose.development.yml exec backend sh -c 'echo $USER_PASSWORD_SALT_SUFFIX') STRIPE_API_KEY=$(docker compose --env-file=./env/.env.development --file docker-compose.development.yml exec backend sh -c 'echo $STRIPE_API_KEY') && cd backend && npm run seed:undo:all && npm run seed:all",
+    "seed:create": "node backend/prisma/seeders/index.ts --create ${npm_config_name} && sudo chmod -R 777 backend/prisma/seeders/",
     "init:backend": "cd backend && npm install",
     "init:frontend": "cd frontend && npm install",
-    "init": "npm install && npm-run-all -p init:*",
-    "seed:dev": "docker compose --env-file=.env.dev exec backend npx sequelize-cli db:seed:all",
-    "start": "docker compose --env-file=.env.dev up -d",
-    "start:build": "docker compose --env-file=.env.dev up --build -d",
-    "stop": "docker compose --env-file=.env.dev down"
+    "init": "npm install -g pnpm && pnpm init:backend && pnpm init:frontend",
+    "build:docker:development": "docker compose --env-file=./env/.env.development --file docker-compose.development.yml build --no-cache",
+    "start:docker:development": "docker compose --env-file=./env/.env.development --file docker-compose.development.yml up -d",
+    "start:build:docker:development": "docker compose --env-file=./env/.env.development --file docker-compose.development.yml up --build -d",
+    "stop:docker:development": "docker compose --env-file=./env/.env.development --file docker-compose.development.yml down",
+    "build:docker:production": "docker compose --env-file=./env/.env.production --file docker-compose.production.yml build --no-cache",
+    "start:docker:production": "docker compose --env-file=./env/.env.production --file docker-compose.production.yml up -d",
+    "start:build:docker:production": "docker compose --env-file=./env/.env.production --file docker-compose.production.yml up --build -d",
+    "stop:docker:production": "docker compose --env-file=./env/.env.production --file docker-compose.production.yml down"
   },
-  "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^6.16.0",
-    "@typescript-eslint/parser": "^6.16.0",
-    "eslint": "^8.56.0",
+  "author": "Oleksandr Igumnov",
+  "license": "UNLICENSED",
+  "developmentDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "eslint": "^8.57.1",
     "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-prettier": "^5.1.2",
+    "eslint-plugin-prettier": "^5.2.1",
     "npm-run-all": "^4.1.5",
     "prettier": "3.1.1",
-    "typescript": "^5.3.3"
+    "typescript": "^5.6.2"
   }
 }
