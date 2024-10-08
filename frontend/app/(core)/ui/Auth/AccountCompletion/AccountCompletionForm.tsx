@@ -9,8 +9,14 @@ import { NotificationType } from '@/app/(core)/utils/notifications.utils';
 import { extractAccountCompletionMetadata, signUp } from '@/app/(core)/actions/auth.actions';
 import { capitalize } from '@/app/(core)/utils/app.utils';
 import { HttpStatusCode } from 'axios';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { SolanaIcon } from '@/app/(core)/ui/Icons/Icons';
+import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 
 export interface AccountCompletionFormState {
+  isWalletConnecting: boolean;
+  selectedWallet?: string;
+  isLoaded: boolean;
   errors: any;
 }
 
@@ -22,6 +28,8 @@ interface AccountCompletionFormMetadataState {
 
 const initialState: AccountCompletionFormState = {
   errors: {},
+  isWalletConnecting: false,
+  isLoaded: false,
 };
 
 const initialMetadataState: AccountCompletionFormMetadataState = {
@@ -35,10 +43,37 @@ const AccountCompletionForm: FC = () => {
   const [state, setState] = useState(initialState);
   const [metadata, setMetadata] = useState(initialMetadataState);
   const router = useRouter();
+  const wallet = useWallet();
+  const walletModal = useWalletModal();
 
   useEffect(() => {
     setMetadata({ ...metadata, isLoaded: true });
+    setState({ ...state, isLoaded: true });
   }, []);
+
+  useEffect(() => {
+    if (state.isLoaded && wallet.publicKey && !state.isWalletConnecting) {
+      wallet.publicKey = null;
+      localStorage.removeItem('walletName');
+      wallet.disconnect();
+    }
+  }, [state.isLoaded, wallet.publicKey, state.isWalletConnecting]);
+
+  useEffect(() => {
+    if (wallet.publicKey && state.isWalletConnecting) {
+      setState({
+        ...state,
+        selectedWallet: wallet.publicKey.toBase58(),
+        errors: {
+          ...state.errors,
+          nested: Object.fromEntries(
+            Object.entries(state.errors.nested ?? {}).filter(([key, _]) => key !== 'wallet'),
+          ),
+        },
+        isWalletConnecting: false,
+      });
+    }
+  }, [state.isWalletConnecting, wallet.publicKey]);
 
   useEffect(() => {
     if (metadata.isLoaded) {
@@ -213,6 +248,43 @@ const AccountCompletionForm: FC = () => {
               }
             />
             {state.errors.nested?.birthDate?.map((error: string, index: number) => (
+              <span key={index} className='text-red-500 text-xs font-medium mt-1 text-justify'>
+                {error}
+              </span>
+            ))}
+          </div>
+          <div className='flex flex-col sm:col-span-2'>
+            <label
+              htmlFor='sign-up-confirm-password'
+              className='text-gray-500 font-medium text-sm mb-1'
+            >
+              Wallet:
+            </label>
+            <div className='flex gap-3'>
+              <input
+                defaultValue={state.selectedWallet}
+                type='text'
+                name='wallet'
+                readOnly
+                id='sign-up-wallet'
+                placeholder='EDFVK31PPpHM7nnv6NUSMTGko46v1u5j8TXnXje1CMPw'
+                className={`border p-3 rounded-lg flex-1 text-gray-700 read-only:text-gray-500 font-medium ${
+                  state.errors.nested?.wallet ? `border-red-500` : ``
+                }`}
+              />
+              <button
+                type='button'
+                className='inline-flex px-5 justify-center items-center border rounded-lg p-2.5 font-medium text-gray-500 text-center hover:bg-slate-100 transition-[0.3s_ease]'
+                onClick={() => {
+                  setState({ ...state, selectedWallet: undefined, isWalletConnecting: true });
+                  walletModal.setVisible(true);
+                }}
+              >
+                <SolanaIcon className='size-5 me-3' />
+                Connect
+              </button>
+            </div>
+            {state.errors.nested?.wallet?.map((error: string, index: number) => (
               <span key={index} className='text-red-500 text-xs font-medium mt-1 text-justify'>
                 {error}
               </span>

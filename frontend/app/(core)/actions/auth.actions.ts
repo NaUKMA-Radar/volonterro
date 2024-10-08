@@ -58,6 +58,8 @@ export const signUp = async (state: any, formData: FormData) => {
     formData,
   ) as any;
 
+  console.log(data);
+
   try {
     if (!data.password) {
       data.password = '#xxxxxx0';

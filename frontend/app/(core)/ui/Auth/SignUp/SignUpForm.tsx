@@ -5,11 +5,7 @@ import { ApplicationRoutes } from '../../../utils/routes.utils';
 import Link from 'next/link';
 import SSOAuthenticationButtons from '../SSOAuthenticationButtons';
 import PasswordInput from '../../Controls/PasswordInput';
-import {
-  authWithSSOIfAuthTokenExist,
-  getWalletAuthMessage,
-  signUp,
-} from '@/app/(core)/actions/auth.actions';
+import { authWithSSOIfAuthTokenExist, signUp } from '@/app/(core)/actions/auth.actions';
 import { useRouter } from 'next/navigation';
 import useNotification from '@/app/(core)/hooks/notifications.hooks';
 import { NotificationType } from '@/app/(core)/utils/notifications.utils';
@@ -18,7 +14,6 @@ import { UserRegistrationMethodEnum } from '@/app/(core)/store/types/user-regist
 import { SolanaIcon } from '@/app/(core)/ui/Icons/Icons';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { useWallet } from '@solana/wallet-adapter-react';
-import bs58 from 'bs58';
 
 export interface SignUpFormProps {}
 export interface SignUpFormState {
